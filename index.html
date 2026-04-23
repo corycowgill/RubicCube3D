@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0b0d17" />
+  <title>Cube Quest 3D - Rubik's Cube</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <canvas id="scene"></canvas>
+
+    <header class="hud top">
+      <div class="hud-group">
+        <div class="stat" title="Elapsed time">
+          <span class="label">Time</span>
+          <span id="timer" class="value">00:00.00</span>
+        </div>
+        <div class="stat" title="Move count">
+          <span class="label">Moves</span>
+          <span id="moves" class="value">0</span>
+        </div>
+        <div class="stat" title="Best time">
+          <span class="label">Best</span>
+          <span id="best" class="value">--:--.--</span>
+        </div>
+      </div>
+    </header>
+
+    <aside class="hud right">
+      <button id="btn-shuffle" class="btn primary" title="Shuffle the cube">
+        <span class="icon">↻</span><span class="text">Shuffle</span>
+      </button>
+      <button id="btn-reset" class="btn" title="Reset to a solved cube">
+        <span class="icon">⟲</span><span class="text">Reset</span>
+      </button>
+      <button id="btn-undo" class="btn" title="Undo last move">
+        <span class="icon">↶</span><span class="text">Undo</span>
+      </button>
+      <button id="btn-music" class="btn toggle" data-on="false" title="Toggle music">
+        <span class="icon">♪</span><span class="text">Music</span>
+      </button>
+      <button id="btn-sfx" class="btn toggle" data-on="true" title="Toggle sound effects">
+        <span class="icon">♫</span><span class="text">SFX</span>
+      </button>
+      <button id="btn-help" class="btn" title="How to play">
+        <span class="icon">?</span><span class="text">Help</span>
+      </button>
+    </aside>
+
+    <footer class="hud bottom">
+      <div class="theme-picker" id="theme-picker">
+        <span class="label">Theme:</span>
+        <button class="swatch" data-theme="classic" title="Classic"></button>
+        <button class="swatch" data-theme="neon" title="Neon"></button>
+        <button class="swatch" data-theme="pastel" title="Pastel"></button>
+        <button class="swatch" data-theme="mono" title="Monochrome"></button>
+      </div>
+    </footer>
+
+    <div id="solved-banner" class="banner hidden">
+      <div class="banner-content">
+        <h1>SOLVED!</h1>
+        <p id="solved-stats"></p>
+        <button id="btn-play-again" class="btn primary big">Play Again</button>
+      </div>
+    </div>
+
+    <div id="help-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>How to Play</h2>
+        <ul>
+          <li><strong>Rotate camera:</strong> Drag empty space (or two-finger drag on mobile).</li>
+          <li><strong>Rotate a slice:</strong> Drag across a sticker on the cube in the direction you want it to spin.</li>
+          <li><strong>Shuffle:</strong> Tap the Shuffle button to scramble.</li>
+          <li><strong>Undo:</strong> Reverses your last move (only counts after shuffling).</li>
+          <li><strong>Goal:</strong> Make every face one solid color.</li>
+        </ul>
+        <p class="hint">The timer starts as soon as you make a move on a shuffled cube.</p>
+        <button id="btn-close-help" class="btn primary">Got it</button>
+      </div>
+    </div>
+
+    <div id="splash" class="splash">
+      <div class="splash-content">
+        <h1>CUBE QUEST 3D</h1>
+        <p>Tap anywhere to begin</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
