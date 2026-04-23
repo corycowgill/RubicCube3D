@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RubiksCube, COLOR_THEMES } from './cube.js';
 import { CubeControls } from './controls.js';
 import { AudioEngine } from './audio.js';
+import { Tutorial } from './tutorial.js';
 
 const STORAGE_KEY = 'cubequest3d_v1';
 
@@ -34,6 +35,7 @@ class Game {
     this._initThree();
     this._initCube();
     this._initControls();
+    this._initTutorial();
     this._initUI();
     this._restoreState();
     this._loop();
@@ -121,6 +123,24 @@ class Game {
     });
   }
 
+  _initTutorial() {
+    this.tutorial = new Tutorial({
+      cube: this.cube,
+      audio: this.audio,
+      onEnter: () => {
+        document.body.classList.add('tutorial-open');
+        // Tutorial playback shouldn't count as solving — pause the timer.
+        this.timerRunning = false;
+      },
+      onExit: () => {
+        document.body.classList.remove('tutorial-open');
+      },
+      onMoveCountChange: () => {
+        this.movesEl.textContent = String(this.cube.totalMoves);
+      },
+    });
+  }
+
   _initUI() {
     // Stats
     this.timerEl = $('#timer');
@@ -152,6 +172,11 @@ class Game {
 
     $('#btn-zoom-in').addEventListener('click', () => { this.audio.click(); this.controls.zoom(0.85); });
     $('#btn-zoom-out').addEventListener('click', () => { this.audio.click(); this.controls.zoom(1.18); });
+
+    $('#btn-tutorial').addEventListener('click', () => {
+      this.audio.click();
+      this.tutorial.toggle();
+    });
 
     $('#btn-help').addEventListener('click', () => $('#help-modal').classList.remove('hidden'));
     $('#btn-close-help').addEventListener('click', () => $('#help-modal').classList.add('hidden'));
@@ -199,6 +224,7 @@ class Game {
         case 's': this.shuffle(); break;
         case 'r': this.reset(); break;
         case 'u': this.undo(); break;
+        case 't': this.tutorial.toggle(); break;
         case '?': case '/': $('#help-modal').classList.toggle('hidden'); break;
       }
       if (e.key === '+' || e.key === '=') this.controls.zoom(0.85);
