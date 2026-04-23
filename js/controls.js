@@ -51,8 +51,11 @@ export class CubeControls {
       target: new THREE.Vector3(0, 0, 0),
       yaw: -0.6,
       pitch: 0.5,
-      distance: 6.5,
+      distance: 9,
     };
+    this.minDistance = 4;
+    this.maxDistance = 22;
+    this._pinch = null;
     this._applyOrbit();
 
     const el = this.renderer.domElement;
@@ -128,23 +131,25 @@ export class CubeControls {
     const p = this.activePointers.get(e.pointerId);
     if (!p) return;
 
+    p.x = e.clientX; p.y = e.clientY;
+
+    // Two-finger gesture: pinch zoom + drag to orbit (midpoint).
+    if (this.activePointers.size >= 2) {
+      // Mark all current pointers as 'gesture' so they don't trigger slice moves.
+      for (const ap of this.activePointers.values()) ap.mode = 'gesture';
+      this._handlePinchOrbit();
+      return;
+    }
+
     const dx = e.clientX - p.startX;
     const dy = e.clientY - p.startY;
     const dist = Math.hypot(dx, dy);
 
     if (!p.mode) {
-      if (dist < this.dragThresholdPx) {
-        p.x = e.clientX; p.y = e.clientY;
-        return;
-      }
-      // Decide mode
-      if (this.activePointers.size > 1) {
-        // Two-finger -> always orbit
+      if (dist < this.dragThresholdPx) return;
+      if (!p.hit || this.cube.animating) {
         p.mode = 'orbit';
-      } else if (!p.hit) {
-        p.mode = 'orbit';
-      } else if (this.cube.animating) {
-        p.mode = 'orbit';
+        p.lastX = p.startX; p.lastY = p.startY;
       } else {
         p.mode = 'slice';
         p.sliceTriggered = false;
@@ -152,35 +157,65 @@ export class CubeControls {
     }
 
     if (p.mode === 'orbit') {
-      const moveX = e.clientX - p.x;
-      const moveY = e.clientY - p.y;
+      const moveX = e.clientX - (p.lastX ?? p.startX);
+      const moveY = e.clientY - (p.lastY ?? p.startY);
       this.orbit.yaw -= moveX * 0.008;
       this.orbit.pitch += moveY * 0.008;
       this.orbit.pitch = Math.max(-1.4, Math.min(1.4, this.orbit.pitch));
       this._applyOrbit();
+      p.lastX = e.clientX; p.lastY = e.clientY;
     } else if (p.mode === 'slice' && !p.sliceTriggered && dist >= this.minRotPx) {
       p.sliceTriggered = true;
       this._performSliceFromDrag(p, e.clientX, e.clientY).then((moved) => {
         if (moved) this.onMove();
       });
     }
-
-    p.x = e.clientX; p.y = e.clientY;
   };
+
+  _handlePinchOrbit() {
+    const pts = Array.from(this.activePointers.values()).slice(0, 2);
+    const [a, b] = pts;
+    const cur = {
+      dist: Math.hypot(a.x - b.x, a.y - b.y),
+      mx: (a.x + b.x) / 2,
+      my: (a.y + b.y) / 2,
+    };
+    if (!this._pinch) {
+      this._pinch = cur;
+      return;
+    }
+    // Zoom from change in finger spread
+    if (this._pinch.dist > 1 && cur.dist > 1) {
+      const ratio = this._pinch.dist / cur.dist;
+      this.zoom(ratio);
+    }
+    // Orbit from midpoint motion
+    const mdx = cur.mx - this._pinch.mx;
+    const mdy = cur.my - this._pinch.my;
+    this.orbit.yaw -= mdx * 0.006;
+    this.orbit.pitch += mdy * 0.006;
+    this.orbit.pitch = Math.max(-1.4, Math.min(1.4, this.orbit.pitch));
+    this._applyOrbit();
+    this._pinch = cur;
+  }
 
   _onPointerUp = (e) => {
     if (this.activePointers.has(e.pointerId)) {
       this.activePointers.delete(e.pointerId);
     }
+    if (this.activePointers.size < 2) this._pinch = null;
     try { this.renderer.domElement.releasePointerCapture(e.pointerId); } catch (_) {}
   };
 
   _onWheel = (e) => {
     e.preventDefault();
-    const factor = Math.exp(e.deltaY * 0.001);
-    this.orbit.distance = Math.max(3.5, Math.min(14, this.orbit.distance * factor));
-    this._applyOrbit();
+    this.zoom(Math.exp(e.deltaY * 0.001));
   };
+
+  zoom(factor) {
+    this.orbit.distance = Math.max(this.minDistance, Math.min(this.maxDistance, this.orbit.distance * factor));
+    this._applyOrbit();
+  }
 
   _applyOrbit() {
     const { yaw, pitch, distance, target } = this.orbit;

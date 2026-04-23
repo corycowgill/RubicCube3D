@@ -150,6 +150,9 @@ class Game {
       saveState({ sfx: next });
     });
 
+    $('#btn-zoom-in').addEventListener('click', () => { this.audio.click(); this.controls.zoom(0.85); });
+    $('#btn-zoom-out').addEventListener('click', () => { this.audio.click(); this.controls.zoom(1.18); });
+
     $('#btn-help').addEventListener('click', () => $('#help-modal').classList.remove('hidden'));
     $('#btn-close-help').addEventListener('click', () => $('#help-modal').classList.add('hidden'));
     $('#btn-play-again').addEventListener('click', () => {
@@ -198,6 +201,8 @@ class Game {
         case 'u': this.undo(); break;
         case '?': case '/': $('#help-modal').classList.toggle('hidden'); break;
       }
+      if (e.key === '+' || e.key === '=') this.controls.zoom(0.85);
+      if (e.key === '-' || e.key === '_') this.controls.zoom(1.18);
     });
 
     // Render best time
